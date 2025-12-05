@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Superblog",
-  description: "Superblog is a blog platform for the modern age.",
+  title: "Wishlist - Gusto ko ng ...",
+  description:
+    "Mag-wishlist na! ✨ Send links from Shopee/Lazada & we magically turn it into a shareable list. No awkward 'Ano gusto mo?' questions this Pasko!",
 };
 
 export default function RootLayout({

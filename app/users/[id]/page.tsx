@@ -14,12 +14,7 @@ export default async function UserProfile({
   const session = await auth();
 
   const user = await prisma.user.findUnique({
-    where: { id: parseInt(id) },
-    include: {
-      posts: {
-        orderBy: { id: "desc" },
-      },
-    },
+    where: { id: id },
   });
 
   if (!user) {
@@ -27,9 +22,6 @@ export default async function UserProfile({
   }
 
   const isOwnProfile = session?.user?.email === user.email;
-  const posts = isOwnProfile
-    ? user.posts
-    : user.posts.filter((post) => post.published);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -92,64 +84,6 @@ export default async function UserProfile({
               </Link>
             )}
           </div>
-          {posts.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-100 p-8 text-center">
-              <p className="text-gray-500 mb-4">
-                {isOwnProfile
-                  ? "You haven't published any posts yet."
-                  : "No published posts yet."}
-              </p>
-              {isOwnProfile && (
-                <Link
-                  href="/posts/new"
-                  className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-600 font-medium transition-colors"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Write your first post
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {posts.map((post) => (
-                <Link
-                  key={post.id}
-                  href={`/posts/${post.id}`}
-                  className="block transition-transform hover:scale-[1.01]"
-                >
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        {post.title}
-                      </h3>
-                      {!post.published && (
-                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded">
-                          Draft
-                        </span>
-                      )}
-                    </div>
-                    {post.content && (
-                      <p className="text-gray-600 line-clamp-2">
-                        {post.content}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

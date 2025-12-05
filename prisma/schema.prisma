@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,22 +10,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 1. User Table (Adapted for Wishlist Owner)
 model User {
-  id            Int       @id @default(autoincrement())
-  name          String?
+  // Use String for ID to match common UUID/CUID usage in modern applications,
+  // especially if integrating external services like Supabase/Firebase Auth.
+  id            String    @id @default(cuid()) // Changed to String/cuid() for better compatibility
+  name          String? // The name shown on the shared list (e.g., "Ate Sarah's")
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  posts         Post[]
   accounts      Account[]
   sessions      Session[]
+
+  wishlists Wishlist[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+// Existing Account Table (Kept for Authentication)
 model Account {
-  userId            Int
+  userId            String // Changed to String to match the new User.id type
   type              String
   provider          String
   providerAccountId String
@@ -47,24 +49,77 @@ model Account {
   @@id([provider, providerAccountId])
 }
 
-model Session {
-  id           Int      @id @default(autoincrement())
-  sessionToken String   @unique
-  userId       Int
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+// 2. WishlistItem Table (Handles the Gifts)
+model Wishlist {
+  id String @id @default(cuid())
+
+  // Link to the User (Owner)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // List Properties
+  name      String // e.g., "Christmas 2025" or "30th Birthday"
+  shareId   String  @unique // The unique slug for the public link /list/[shareId]
+  is_public Boolean @default(true)
+
+  // Link to all the items in this list
+  items WishlistItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  authorId  Int
-  author    User    @relation(fields: [authorId], references: [id])
+// 3. WishlistItem Table (Updated to link to Wishlist)
+model WishlistItem {
+  id String @id @default(cuid())
+
+  // CHANGED: Link to the specific Wishlist container
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+
+  // Item Details (Captured by Magic Link)
+  name          String
+  image_url     String?
+  original_link String
+  price         Decimal? @db.Decimal(10, 2)
+  notes         String?
+
+  // Status and Reservation
+  reservation_status String        @default("UNRESERVED")
+  reservations       Reservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 3. Reservations Table (The Anonymity Engine)
+model Reservation {
+  id String @id @default(cuid())
+
+  // Link to the Item
+  itemId String
+  item   WishlistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  // Giver Information (MUST NOT be easily queried by List Owner)
+  // This unique session ID is what tracks the Giver's action anonymously
+  giver_session_id String // A unique, temporary ID (e.g., hash or CUID) for the Giver (Guest)
+  giver_nickname   String? // Optional nickname for display to *other Givers*
+  giver_email      String? // Optional email for Giver follow-up (kept private from List Owner)
+
+  // Tracking
+  is_purchased Boolean  @default(false)
+  reserved_at  DateTime @default(now())
+
+  // An item can be reserved multiple times, but we will manage that in the application logic
+  // (e.g., only show the 'Reserved by X people' count).
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
