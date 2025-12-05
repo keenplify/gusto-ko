@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "gusto-ko Docs": {
+      "type": "sse",
+      "url": "https://gitmcp.io/keenplify/gusto-ko"
+    }
+  }
+}

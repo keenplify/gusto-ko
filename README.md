@@ -1,3 +1,21 @@
+https://gemini.google.com/app/a871b9f705ed51cc
+
+TODO LIST
+
+1. Buy domain
+2. Register to Google for
+3. use Auth0 for fb auth?
+
+Feature ID Feature Name Description Rationale for Virality
+A1 Universal Import Use the OG Tag Parser API (Magic Link) to add items from Shopee/Lazada quickly. Minimizes user effort (max clicks) = High adoption.
+A2 Unique Share Link Generates a permanent, unguessable, read-only URL for each list. Required for sharing on Facebook/other platforms.
+A3 Social Card (OG Tags) The shared link generates a beautiful preview image with the user's name and list items. Maximizes click-through rate from social media.
+A4 Guest View Visitors can view the list without logging in. Removes friction for gift-givers = High list views.
+A5 Gift Reservation System Givers can click "Mark as Reserved" (anonymously). The list owner cannot see who reserved it, but all other viewers can. Prevents duplicate gifts = High utility.
+A6 Link to Store Each item has a prominent button that links directly to the original Shopee/Lazada product page. Completes the circle for the giver (Purchase Action).
+
+# OLD README
+
 # Next.js + Prisma Postgres Example
 
 ![nextjs demo logos](https://github.com/user-attachments/assets/878d39b7-ca99-4dc5-a095-94ca9d010486)
