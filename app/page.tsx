@@ -1,52 +1,66 @@
 import { unstable_noStore as noStore } from "next/cache";
 
-import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { auth, signIn, signOut } from "@/auth";
 
-import Wishlist from "@/components/wishlist";
+import UserWishlists from "@/components/lists/user-wishlists";
+import UserSetup from "@/components/lists/user-setup";
+import { User } from "@prisma/client";
 
 export default async function Home() {
   noStore();
 
   const session = await auth();
-  const wishlists = session?.user?.id
-    ? await prisma.wishlist.findMany({
-        where: {
-          userId: session?.user.id,
-        },
-        include: {
-          items: {
-            include: {
-              _count: true,
-            },
-          },
-        },
-      })
-    : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-200 to-neutral-50 text-neutral-800">
-      <main className="max-w-4xl mx-auto px-4 pt-24 pb-16">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4 bg-clip-text">
-            Gusto ko ng ...
-          </h1>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            The Pinoy Wishlist App
-          </p>
-        </div>
-        <div className="flex justify-center">
-          {wishlists.map((wishlist) => (
-            <Wishlist item={wishlist} key={wishlist.id} />
-          ))}
-          {wishlists.length === 0 && (
-            <div className="flex flex-col gap-4">
-              <div>You have no wishlists yet. Start by creating one!</div>
-              <button className="btn btn-success">Create Wishlist</button>
+    <div className="flex flex-col gap-4 px-4 pt-24 pb-16">
+      <div className="text-center mb-16">
+        <h1 className="text-5xl font-bold mb-4 bg-clip-text">
+          Gusto ko ng ...
+        </h1>
+        <p className="text-base-content/85 text-lg max-w-2xl mx-auto">
+          The Pinoy Wishlist App ✨
+        </p>
+      </div>
+
+      {session?.user?.id ? (
+        <>
+          <UserWishlists userId={session.user.id} />
+          <UserSetup user={session.user as User} />
+          <div className="mt-auto flex flex-gol gap-2 items-center justify-center">
+            <p>You are logged in as {session.user.name} </p>
+            <form
+              action={async () => {
+                "use server";
+                await signOut();
+              }}
+            >
+              <button className="btn btn-primary">Sign out</button>
+            </form>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mt-auto flex flex-col gap-2 justify-center items-center">
+            <div className="card w-96 bg-base-content text-base-100 card-md shadow-sm">
+              <div className="card-body">
+                <h2 className="card-title">Welcome</h2>
+                <p>You need to sign in to use this service</p>
+
+                <div className="justify-end card-actions">
+                  <form
+                    action={async () => {
+                      "use server";
+                      await signIn("auth0");
+                    }}
+                  >
+                    <button className="btn btn-primary">Sign in</button>
+                  </form>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </main>
+          </div>
+        </>
+      )}
     </div>
   );
 }

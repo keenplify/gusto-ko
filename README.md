@@ -3,8 +3,13 @@ https://gemini.google.com/app/a871b9f705ed51cc
 TODO LIST
 
 1. Buy domain
-2. Register to Google for
-3. use Auth0 for fb auth?
+2. Setup GCash - screenshots already air dropped
+3. Remove decimal from price. use serializable format (like how stripe does it? multiply to 100?)
+4. HANDLE CUSTOM IMAGE UPLOAD
+5. HANDLE SAVING WISHLIST ITEM
+6. CREATE MY DAY DESIGN SCREEN
+
+7. use Auth0 for fb auth? - done
 
 Feature ID Feature Name Description Rationale for Virality
 A1 Universal Import Use the OG Tag Parser API (Magic Link) to add items from Shopee/Lazada quickly. Minimizes user effort (max clicks) = High adoption.

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { CropImageProvider } from "@/components/providers/CropImageProvider";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +30,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <div className="min-h-screen bg-linear-to-b from-base-300 to-base-100 text-base-content flex flex-col">
+          <main className="max-w-4xl w-full mx-auto grow flex flex-col h-full">
+            <CropImageProvider>{children}</CropImageProvider>
+          </main>
+        </div>
+        <Toaster />
       </body>
     </html>
   );

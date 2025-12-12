@@ -19,6 +19,7 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  gcashQRUrl    String?
   accounts      Account[]
   sessions      Session[]
 
@@ -80,8 +81,8 @@ model WishlistItem {
   // Item Details (Captured by Magic Link)
   name          String
   image_url     String?
-  original_link String
-  price         Decimal? @db.Decimal(10, 2)
+  original_link String?
+  price         Int?
   notes         String?
 
   // Status and Reservation
