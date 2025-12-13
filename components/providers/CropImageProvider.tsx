@@ -9,19 +9,14 @@ import {
   useRef,
   useEffect,
 } from "react";
-import ReactCrop, {
-  type ReactCropProps,
-  type Crop,
-  centerCrop,
-  makeAspectCrop,
-  convertToPixelCrop,
-} from "react-image-crop";
-import "react-image-crop/dist/ReactCrop.css";
+import Cropper from "react-easy-crop";
 
 type CropRequest = {
   file: File;
   title?: ReactNode;
-  props: Partial<ReactCropProps>; // Store props here too
+  props: {
+    aspect?: number;
+  };
   resolve: (result: File) => void; // Resolve to a File
   reject: (reason?: string) => void;
 };
@@ -36,34 +31,28 @@ const CropImageContext = createContext<CropImageContextValue | undefined>(
   undefined
 );
 
-// --- Helper Functions for Cropping ---
+// --- Helper Functions for Cropping using pixel coordinates ---
 
-/** Converts the cropped area to a new File object */
-async function getCroppedImageFile(
+async function getCroppedImageFileFromPixels(
   image: HTMLImageElement,
-  pixelCrop: Crop,
+  pixelCrop: { x: number; y: number; width: number; height: number },
   fileName: string,
   fileType: string
 ): Promise<File> {
   const canvas = document.createElement("canvas");
-  const scaleX = image.naturalWidth / image.width;
-  const scaleY = image.naturalHeight / image.height;
-
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
   const ctx = canvas.getContext("2d");
 
-  if (!ctx) {
-    throw new Error("No 2d context");
-  }
+  if (!ctx) throw new Error("No 2d context");
 
-  // Draw the section of the image we want to crop
+  // pixelCrop is already in natural image pixels (react-easy-crop provides this)
   ctx.drawImage(
     image,
-    pixelCrop.x * scaleX,
-    pixelCrop.y * scaleY,
-    pixelCrop.width * scaleX,
-    pixelCrop.height * scaleY,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
     0,
     0,
     pixelCrop.width,
@@ -72,36 +61,11 @@ async function getCroppedImageFile(
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error("Canvas to Blob failed"));
-        return;
-      }
-      // Create a new File object from the blob
+      if (!blob) return reject(new Error("Canvas to Blob failed"));
       const croppedFile = new File([blob], fileName, { type: fileType });
       resolve(croppedFile);
     }, fileType);
   });
-}
-
-/** Utility to center the initial crop */
-function centerAspectCrop(
-  mediaWidth: number,
-  mediaHeight: number,
-  aspect: number
-) {
-  return centerCrop(
-    makeAspectCrop(
-      {
-        unit: "%",
-        width: 90,
-      },
-      aspect,
-      mediaWidth,
-      mediaHeight
-    ),
-    mediaWidth,
-    mediaHeight
-  );
 }
 
 // --- Custom Hooks ---
@@ -120,11 +84,19 @@ export function CropImageProvider({ children }: { children: ReactNode }) {
     null
   );
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
 
   const [src, setSrc] = useState<string>(""); // State for Base64 image URL
-  const [crop, setCrop] = useState<Crop>();
-  const [cropProps, setCropProps] = useState<Partial<ReactCropProps>>({});
+
+  // react-easy-crop state
+  const [crop, setCrop] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState<number>(1);
+  const croppedAreaPixelsRef = useRef<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   // 1. Initiate Crop Request
   const cropImage = useCallback(({ file, props, title }: CropImageProps) => {
@@ -138,10 +110,11 @@ export function CropImageProvider({ children }: { children: ReactNode }) {
     if (currentRequest) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        // Set the Base64 source
         setSrc(reader.result as string);
-        setCropProps(currentRequest.props);
-        setCrop(undefined); // Reset crop state for the new image
+        // reset state
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        croppedAreaPixelsRef.current = null;
         dialogRef.current?.showModal();
       };
       reader.onerror = () => {
@@ -153,43 +126,33 @@ export function CropImageProvider({ children }: { children: ReactNode }) {
       dialogRef.current?.close();
       setSrc("");
     }
-    // Cleanup function for object URLs if we used URL.createObjectURL (but we used FileReader)
   }, [currentRequest]);
 
-  // 3. Handle ReactCrop Image Load and Initial Crop Setup
-  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    imageRef.current = e.currentTarget;
-    const { width, height } = e.currentTarget;
+  const onCropComplete = useCallback(
+    (
+      _: unknown,
+      croppedAreaPixels: { x: number; y: number; width: number; height: number }
+    ) => {
+      croppedAreaPixelsRef.current = croppedAreaPixels;
+    },
+    []
+  );
 
-    // Set an initial crop if an aspect is provided
-    if (cropProps.aspect) {
-      const initialCrop = centerAspectCrop(width, height, cropProps.aspect);
-      setCrop(initialCrop);
-    }
-  };
-
-  // 4. Resolve the Promise (User Clicks "Crop")
   const finishCrop = async () => {
-    if (!currentRequest || !crop || !imageRef.current) return;
-
-    // We need the pixel-based crop values relative to the original image size
-    const pixelCrop = convertToPixelCrop(
-      crop,
-      imageRef.current.width,
-      imageRef.current.height
-    );
+    if (!currentRequest || !imageRef.current || !croppedAreaPixelsRef.current)
+      return;
 
     try {
-      const resultFile = await getCroppedImageFile(
+      const resultFile = await getCroppedImageFileFromPixels(
         imageRef.current,
-        pixelCrop,
+        croppedAreaPixelsRef.current,
         currentRequest.file.name,
         currentRequest.file.type
       );
 
       currentRequest.resolve(resultFile);
       setCurrentRequest(null);
-      setCrop(undefined); // Clear crop state
+      croppedAreaPixelsRef.current = null;
     } catch (error) {
       console.error(error);
       currentRequest.reject("Error generating cropped image.");
@@ -197,63 +160,81 @@ export function CropImageProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 5. Reject the Promise (User Clicks "Cancel")
   const cancelCrop = () => {
     if (currentRequest) {
       currentRequest.reject("User canceled cropping");
       setCurrentRequest(null);
-      setCrop(undefined); // Clear crop state
+      croppedAreaPixelsRef.current = null;
     }
   };
 
   return (
     <CropImageContext.Provider value={{ cropImage }}>
       {children}
-      <dialog ref={dialogRef} id="crop_image_modal" className="modal">
-        {currentRequest &&
-          src && ( // Only render the contents if we have a request and the source is loaded
-            <div className="modal-box flex flex-col gap-4 max-w-2xl w-full">
-              <h3 className="font-bold text-lg">
-                {currentRequest.title || "Crop Image"}
-              </h3>
-              <div
-                className="flex justify-center p-4 bg-gray-100 rounded 
-                          grow overflow-y-auto max-h-[calc(100vh-160px)] aspect-square"
-              >
-                <ReactCrop
-                  crop={crop}
-                  onChange={(c) => setCrop(c)}
-                  onComplete={(c) => setCrop(c)}
-                  ruleOfThirds={true}
-                  {...cropProps}
-                >
-                  {/* The image component that ReactCrop wraps.
-                  It uses the base64 src generated from the file.
-                */}
-                  <img
-                    src={src}
-                    alt="Cropped image preview"
-                    onLoad={onImageLoad}
-                  />
-                </ReactCrop>
-              </div>
-              <div className="modal-action mt-0 pt-0">
-                <button
-                  className="btn btn-primary"
-                  onClick={finishCrop}
-                  // Disable if no crop selection has been made
-                  disabled={!crop?.width || !crop?.height}
-                >
-                  Crop and Save
-                </button>
-                <form method="dialog">
-                  <button className="btn" onClick={cancelCrop}>
-                    Cancel
-                  </button>
-                </form>
-              </div>
+      <dialog
+        ref={dialogRef}
+        id="crop_image_modal"
+        className="modal modal-bottom sm:modal-middle"
+      >
+        {currentRequest && src && (
+          <div className="modal-box flex flex-col gap-4 max-w-2xl w-full">
+            <h3 className="font-bold text-lg">
+              {currentRequest.title || "Crop Image"}
+            </h3>
+
+            <div className="relative w-full h-[420px] bg-gray-100 rounded overflow-hidden">
+              <Cropper
+                image={src}
+                crop={crop}
+                zoom={zoom}
+                aspect={currentRequest.props.aspect || 1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+              {/* hidden image element used to obtain natural image element for canvas cropping */}
+              <img
+                ref={(el) => {
+                  imageRef.current = el;
+                }}
+                src={src}
+                alt=""
+                onLoad={(e) => {
+                  imageRef.current = e.currentTarget as HTMLImageElement;
+                }}
+                className="hidden"
+              />
             </div>
-          )}
+
+            <div className="flex items-center gap-3 justify-center">
+              <label className="label">Zoom</label>
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.1}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="range range-sm"
+              />
+            </div>
+
+            <div className="modal-action mt-0 pt-0">
+              <button
+                className="btn btn-primary"
+                onClick={finishCrop}
+                disabled={!croppedAreaPixelsRef.current}
+              >
+                Crop and Save
+              </button>
+              <form method="dialog">
+                <button className="btn" onClick={cancelCrop}>
+                  Cancel
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </dialog>
     </CropImageContext.Provider>
   );

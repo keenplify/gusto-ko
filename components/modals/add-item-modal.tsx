@@ -23,14 +23,13 @@ export default function AddItemModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm({
-    defaultValues: {} as Partial<WishlistItem>,
+    defaultValues: {
+      original_link: "",
+    } as Partial<WishlistItem>,
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
       try {
-        const res = await upsertWishlistItemByShareId(shareId, {
-          ...value,
-          price: value.price ? value.price * 100 : 0,
-        });
+        const res = await upsertWishlistItemByShareId(shareId, value);
 
         if (!res.success) {
           toast.error(res.reason);
@@ -47,51 +46,50 @@ export default function AddItemModal({
 
   const propagateFromUrl = useCallback(
     async (url: string) => {
-      if (isShopee) {
+      if (!url) return;
+      const _isShopee = url.includes("shopee.ph");
+
+      if (_isShopee) {
         const path = new URL(url).pathname.split("/")[1];
         const trimmed = path.replace(/-i\.\d+.*/, "");
-        form.setFieldValue("name", trimmed.replace(/-/g, " "));
-
-        return;
-      }
-
-      if (!url) {
+        const current = form.state.values;
+        form.reset({ ...current, name: trimmed.replace(/-/g, " ") });
         return;
       }
 
       const res = await extractMetadataFromUrl(url);
 
       const price = res.priceNumber;
-      if (price) {
-        form.setFieldValue("price", price);
-      }
-
       const itemName = res.og?.ogTitle;
-      if (itemName) {
-        form.setFieldValue("name", itemName);
-      }
-
       const image = res.og?.ogImage;
 
+      const current = form.state.values;
+      const updated: Record<string, unknown> = { ...current };
+
+      if (price) updated.price = price;
+      if (itemName) updated.name = itemName;
+
       if (typeof image === "string") {
-        form.setFieldValue("image_url", image);
+        updated.image_url = image;
       } else if (typeof image === "object" && !Array.isArray(image)) {
-        form.setFieldValue("image_url", image.url);
+        updated.image_url = image.url;
       } else if (
         Array.isArray(image) &&
         image[0] &&
         typeof image[0] === "string"
       ) {
-        form.setFieldValue("image_url", image[0]);
+        updated.image_url = image[0];
       } else if (
         Array.isArray(image) &&
         image[0] &&
         typeof image[0] === "object"
       ) {
-        form.setFieldValue("image_url", image[0].url);
+        updated.image_url = image[0].url;
       }
+
+      form.reset(updated);
     },
-    [form, isShopee]
+    [form]
   );
 
   useEffect(() => {
@@ -103,9 +101,41 @@ export default function AddItemModal({
   };
 
   return (
-    <dialog ref={dialogRef} id="add_item_modal" className="modal">
+    <dialog
+      ref={dialogRef}
+      id="add_item_modal"
+      className="modal modal-bottom sm:modal-middle"
+    >
       <div className="modal-box flex flex-col gap-4">
         <h3 className="font-bold text-lg">Add Item to Wishlist</h3>
+
+        <div className="bg-base-200 rounded-lg p-3 text-sm space-y-2">
+          <p className="font-semibold text-base-content">
+            Supported Platforms:
+          </p>
+          <ul className="space-y-1.5 text-base-content/80">
+            <li className="flex gap-2">
+              <span className="text-success font-bold">✓</span>
+              <span>
+                <strong>Lazada</strong> - Price & image will be auto-filled
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-success font-bold">✓</span>
+              <span>
+                <strong>TikTok Shop</strong> - Price & image will be auto-filled
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-warning font-bold">⚠</span>
+              <span>
+                <strong>Shopee</strong> - You&apos;ll need to manually add the
+                price and image
+              </span>
+            </li>
+          </ul>
+        </div>
+
         <h4 className="font-bold text-md">Product Link</h4>
         <form.Field
           name="original_link"
@@ -117,25 +147,23 @@ export default function AddItemModal({
           }}
         >
           {(field) => (
-            <label className="input w-full">
+            <label className="input w-full min-h-8">
               <Link className="h-[1em] opacity-50" />
               <input
                 type="url"
                 className="grow"
                 disabled={isSubmitting}
                 onChange={(e) => field.handleChange(e.target.value)}
-                value={field.state.value || ""}
+                value={field.state.value!}
+                placeholder="URL"
                 onBlur={(e) => {
                   field.handleBlur();
                   propagateFromUrl(e.currentTarget.value);
                 }}
-                onKeyUp={(e) => {
-                  if (e.key === "Enter") {
-                    propagateFromUrl(e.currentTarget.value);
-                  }
-                }}
                 onPaste={(e) => {
-                  propagateFromUrl(e.clipboardData.getData("text/plain"));
+                  const pasted = e.clipboardData.getData("text/plain");
+                  // update the field value immediately so subscribers and the UI reflect the pasted link
+                  propagateFromUrl(pasted);
                 }}
               />
             </label>

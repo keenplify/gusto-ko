@@ -1,2 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+.crop-image-container .ReactCrop__child-wrapper {
+  height: 100%;
+}

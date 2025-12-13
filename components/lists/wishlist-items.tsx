@@ -25,6 +25,7 @@ export default async function WishlistItems(props: WishlistItemsProps) {
         select: {
           image: true,
           name: true,
+          gcashQRUrl: true,
         },
       },
     },
@@ -73,6 +74,7 @@ export default async function WishlistItems(props: WishlistItemsProps) {
             isOwnWishlist={isOwnWishlist}
             path="/wishlists/[id]"
             expanded={props.expanded}
+            wishlistOwner={wishlist.user}
           />
         ))}
         {wishlist.items.length === 0 && (

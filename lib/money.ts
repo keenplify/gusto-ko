@@ -1,4 +1,5 @@
 import currency from "currency.js";
+import { ChangeEvent, FocusEvent, InputHTMLAttributes } from "react";
 
 // Define defaults for Philippine Peso
 const PHP_DEFAULTS: currency.Options = {
@@ -41,8 +42,8 @@ export class MonetaryAmount {
   /**
    * Returns the formatted string (e.g., "₱1,000.50")
    */
-  toString(): string {
-    return this._value.format();
+  toString(opts?: currency.Options | currency.Format): string {
+    return this._value.format(opts);
   }
 
   /**
@@ -76,3 +77,47 @@ export class MonetaryAmount {
     return new MonetaryAmount(this._value.divide(number));
   }
 }
+
+interface MoneyInputArgs
+  extends Pick<InputHTMLAttributes<HTMLInputElement>, "onBlur"> {
+  value: string;
+  setValue: (v: string) => void;
+}
+
+export const moneyInputProps = ({
+  value,
+  setValue,
+  onBlur,
+}: MoneyInputArgs) => ({
+  inputMode: "decimal" as const,
+
+  onChange: (event: ChangeEvent<HTMLInputElement>) => {
+    let v = event.target.value;
+
+    v = v.replace(/[^\d.,]/g, "").replace(/(\..*)\./g, "$1");
+
+    const [, decimals] = v.split(".");
+    if (decimals?.length > 2) {
+      v = v.slice(0, v.length - 1);
+    }
+
+    setValue(v);
+  },
+
+  onBlur: (event: FocusEvent<HTMLInputElement, Element>) => {
+    const num = Number(value.replace(/,/g, ""));
+
+    if (Number.isNaN(num)) {
+      setValue("");
+      return;
+    }
+
+    setValue(new MonetaryAmount(num).toString({ symbol: "" }));
+
+    if (onBlur) {
+      onBlur(event);
+    }
+  },
+
+  value,
+});

@@ -3,7 +3,7 @@
 import { SetupGCashModal } from "@/components/modals/setup-gcash-modal";
 import { User } from "@prisma/client";
 import { ChevronRight, QrCode } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 interface UserSetupProps {
   user: User;
@@ -11,6 +11,15 @@ interface UserSetupProps {
 
 export default function UserSetup({ user }: UserSetupProps) {
   const [openGCash, setOpenGCash] = useState(false);
+  const modalRef = useRef<HTMLDialogElement>(null);
+
+  const handleOpenModal = () => {
+    setOpenGCash(true);
+    // Ensure modal opens even if already true
+    setTimeout(() => {
+      modalRef.current?.showModal();
+    }, 0);
+  };
   return (
     <>
       <ul className="list bg-base-100 rounded-box shadow-md w-full">
@@ -29,13 +38,18 @@ export default function UserSetup({ user }: UserSetupProps) {
           </div>
           <button
             className="btn btn-square btn-ghost"
-            onClick={() => setOpenGCash(true)}
+            onClick={handleOpenModal}
           >
             <ChevronRight />
           </button>
         </li>
       </ul>
-      <SetupGCashModal show={openGCash} user={user} />
+      <SetupGCashModal
+        ref={modalRef}
+        show={openGCash}
+        user={user}
+        onSuccess={() => setOpenGCash(false)}
+      />
     </>
   );
 }
