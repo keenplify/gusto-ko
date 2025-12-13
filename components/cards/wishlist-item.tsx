@@ -116,12 +116,12 @@ export default function WishlistItemCard({
       >
         <figure
           className={twMerge(
-            "relative aspect-square flex justify-center items-center bg-base-100 h-full",
-            !expanded &&
-              "w-[120px] md:w-[136px] md:h-[136px] min-w-[120px] md:min-w-[136px]",
-            expanded &&
-              "w-full h-auto md:w-[136px] md:h-[136px] md:min-w-[136px]"
+            "relative aspect-square flex justify-center items-center bg-base-100 max-h-full w-[136px] min-w-[136px] min-h-[136px]"
           )}
+          style={{
+            minWidth: "136px",
+            minHeight: "136px",
+          }}
         >
           {item.image_url ? (
             <Image
