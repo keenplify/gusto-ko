@@ -4,12 +4,22 @@ import WishlistItems from "@/components/lists/wishlist-items";
 import ShareWishlistModal from "@/components/modals/share-wishlist-modal";
 import prisma from "@/lib/prisma";
 import { User } from "@prisma/client";
-import { Plus, Sparkles } from "lucide-react"; // Imported Sparkles for visual flair
+import { Plus, Sparkles } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 
 type Props = {
   params: Promise<{ id: string }>;
+};
+
+// Helper to construct the absolute URL
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.startsWith("http")
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : `https://${process.env.NEXT_PUBLIC_SITE_URL}`;
+  }
+  return "http://localhost:3000";
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -19,10 +29,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     where: {
       shareId: id,
     },
+    include: {
+      user: true, // Included to personalize the description
+    },
   });
 
+  const title = `${wishlist?.name || "Wishlist"} - gustoko.ng`;
+  const description = wishlist
+    ? `Check out ${wishlist.user.name}'s wishlist! Help make their dreams come true. ✨`
+    : "Mag-wishlist na! Send links & we turn it into a shareable list.";
+
   return {
-    title: `${wishlist?.name || "Wishlist"} - gustoko.ng`,
+    metadataBase: new URL(getBaseUrl()),
+    title: title,
+    description: description,
+    openGraph: {
+      title: title,
+      description: description,
+      type: "website",
+      images: [
+        {
+          url: `/api/og/wishlist/${id}`, // <--- Consuming your dynamic route
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: title,
+      description: description,
+      images: [`/api/og/wishlist/${id}`],
+    },
   };
 }
 

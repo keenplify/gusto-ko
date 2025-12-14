@@ -21,7 +21,7 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
   : "http://localhost:3000";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(baseUrl), // <--- Important for OG images
+  metadataBase: new URL(baseUrl),
   title: "Wishlist - Gusto ko ng ...",
   description:
     "Mag-wishlist na! ✨ Send links from Tiktok/Shopee/Lazada & we magically turn it into a shareable list. No awkward 'Ano gusto mo?' questions this Pasko!",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/api/og/default", // <--- Points to your route handler
+        url: "/api/og/default",
         width: 1200,
         height: 630,
         alt: "Create a Wishlist or Give Gifts",
