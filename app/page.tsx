@@ -6,6 +6,7 @@ import UserWishlists from "@/components/lists/user-wishlists";
 import UserSetup from "@/components/lists/user-setup";
 import { User } from "@prisma/client";
 import WishlistReservations from "@/components/lists/wishlist-reservations";
+import { Gift } from "lucide-react";
 
 export default async function Home() {
   noStore();
@@ -15,10 +16,10 @@ export default async function Home() {
   return (
     <div className="flex flex-col gap-4 px-4 pt-24 pb-16">
       <div className="text-center mb-16">
-        <h1 className="text-5xl font-bold mb-4 bg-clip-text">
-          Gusto ko ng ...
+        <h1 className="text-5xl font-bold mb-4 bg-clip-text flex gap-4 items-center justify-center text-primary">
+          <Gift size={64} /> <span>Gusto ko ng ...</span>
         </h1>
-        <p className="text-base-content/85 text-lg max-w-2xl mx-auto">
+        <p className="text-base-content/85 text-lg max-w-2xl mx-auto font-bold">
           The Pinoy Wishlist App ✨
         </p>
       </div>
