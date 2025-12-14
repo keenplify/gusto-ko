@@ -22,6 +22,8 @@ interface WishlistItemProps {
   path?: string;
   expanded?: boolean;
   disabled?: boolean;
+  sessionUser?: User;
+  blockGift?: boolean;
 }
 
 export default function WishlistItemCard({
@@ -33,7 +35,9 @@ export default function WishlistItemCard({
   path,
   expanded,
   disabled,
-  wishlistOwner, // Destructure new prop
+  wishlistOwner,
+  sessionUser,
+  blockGift,
 }: WishlistItemProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const modalRef = useRef<HTMLDialogElement>(null); // Ref for the Gift Modal
@@ -104,7 +108,7 @@ export default function WishlistItemCard({
   // Format price for the modal
   const displayPrice = item.price
     ? MonetaryAmount.fromInteger(item.price).toString()
-    : "Any Amount";
+    : undefined;
 
   return (
     <>
@@ -137,7 +141,10 @@ export default function WishlistItemCard({
           {edit && (
             <div className="absolute inset-0 flex items-end justify-center p-2">
               <label
-                className="btn btn-xs btn-primary/90"
+                className={twMerge(
+                  "btn btn-xs btn-primary/90",
+                  disabled && "btn-disabled"
+                )}
                 htmlFor={`file-input-${item?.id || "new"}`}
               >
                 {uploading ? "Uploading..." : "Change"}
@@ -156,14 +163,17 @@ export default function WishlistItemCard({
         </figure>
         <div
           className={twMerge(
-            "card-body flex flex-col justify-center gap-1 md:gap-2 py-2 px-2 md:py-2 md:px-3 shrink min-w-0",
+            "card-body flex flex-col justify-center gap-1 md:gap-2 py-2 px-2 md:py-2 md:px-3 shrink min-w-0 min-h-[136px]",
             !expanded && "flex-1"
           )}
         >
           <h2 className="card-title text-sm md:text-base mt-2 w-full block">
             {edit ? (
               <input
-                className="input input-sm text-xs md:text-sm w-full"
+                className={twMerge(
+                  "input input-sm text-xs md:text-sm w-full",
+                  disabled && "input-ghost"
+                )}
                 disabled={disabled}
                 value={item?.name || ""}
                 onChange={(e) =>
@@ -178,11 +188,16 @@ export default function WishlistItemCard({
             )}
           </h2>
           {edit ? (
-            <label className="input input-sm md:input-md">
+            <label
+              className={twMerge(
+                "input input-sm md:input-md",
+                disabled && "input-ghost"
+              )}
+            >
               <PhilippinePeso size={16} />
               <input
                 type="text"
-                className="grow text-xs md:text-sm"
+                className={twMerge("grow text-xs md:text-sm")}
                 disabled={disabled}
                 placeholder="Price"
                 {...moneyInputProps({
@@ -214,7 +229,10 @@ export default function WishlistItemCard({
                   </label>
                   <textarea
                     id="new-notes"
-                    className="textarea"
+                    className={twMerge(
+                      "textarea",
+                      disabled && "textarea-ghost"
+                    )}
                     disabled={disabled}
                     value={item.notes || ""}
                     onChange={(e) =>
@@ -233,7 +251,7 @@ export default function WishlistItemCard({
           )}
 
           {!edit && (
-            <div className="card-actions justify-end mb-2">
+            <div className="card-actions justify-end mt-auto">
               {item.original_link && (
                 <a
                   href={item.original_link}
@@ -245,10 +263,13 @@ export default function WishlistItemCard({
               )}
               {!isOwnWishlist ? (
                 <button
-                  className="btn btn-primary btn-sm"
+                  className={twMerge(
+                    "btn btn-primary btn-sm",
+                    blockGift && "btn-disabled"
+                  )}
                   onClick={handleGiftClick} // Changed this to use our handler
                 >
-                  <Gift /> <span className="hidden md:block">Gift</span>
+                  <Gift /> {blockGift ? "Reserved" : "Gift"}
                 </button>
               ) : (
                 <button
@@ -264,11 +285,13 @@ export default function WishlistItemCard({
       </div>
 
       {/* Render the Modal, kept hidden until .showModal() is called */}
-      {wishlistOwner && (
+      {wishlistOwner && item.id && (
         <PaymentQRModal
           ref={modalRef}
           user={wishlistOwner}
           amount={displayPrice}
+          itemId={item.id}
+          sessionUser={sessionUser}
         />
       )}
     </>

@@ -2,7 +2,7 @@ https://gemini.google.com/app/a871b9f705ed51cc
 
 TODO LIST
 
-1. Buy domain
+1. Wait for domain in dynadot.com and put it on vercel.com
 2. When gifting, prompt if want to anonymously send or login and let the receiver know who sent them (and add a custom message)
 3. CREATE MY DAY DESIGN SCREEN
 

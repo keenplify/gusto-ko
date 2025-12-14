@@ -5,6 +5,7 @@ import { auth, signIn, signOut } from "@/auth";
 import UserWishlists from "@/components/lists/user-wishlists";
 import UserSetup from "@/components/lists/user-setup";
 import { User } from "@prisma/client";
+import WishlistReservations from "@/components/lists/wishlist-reservations";
 
 export default async function Home() {
   noStore();
@@ -25,6 +26,7 @@ export default async function Home() {
       {session?.user?.id ? (
         <>
           <UserWishlists userId={session.user.id} />
+          <WishlistReservations userId={session.user.id} />
           <UserSetup user={session.user as User} />
           <div className="mt-auto flex flex-gol gap-2 items-center justify-center">
             <p>You are logged in as {session.user.name} </p>

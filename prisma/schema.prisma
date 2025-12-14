@@ -14,14 +14,15 @@ datasource db {
 model User {
   // Use String for ID to match common UUID/CUID usage in modern applications,
   // especially if integrating external services like Supabase/Firebase Auth.
-  id            String    @id @default(cuid()) // Changed to String/cuid() for better compatibility
+  id            String        @id @default(cuid()) // Changed to String/cuid() for better compatibility
   name          String? // The name shown on the shared list (e.g., "Ate Sarah's")
-  email         String    @unique
+  email         String        @unique
   emailVerified DateTime?
   image         String?
   gcashQRUrl    String?
   accounts      Account[]
   sessions      Session[]
+  reservations  Reservation[]
 
   wishlists Wishlist[]
 
@@ -97,15 +98,17 @@ model WishlistItem {
 model Reservation {
   id String @id @default(cuid())
 
-  // Link to the Item
-  itemId String
-  item   WishlistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId String?
+  item   WishlistItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  // Giver Information (MUST NOT be easily queried by List Owner)
-  // This unique session ID is what tracks the Giver's action anonymously
   giver_session_id String // A unique, temporary ID (e.g., hash or CUID) for the Giver (Guest)
   giver_nickname   String? // Optional nickname for display to *other Givers*
   giver_email      String? // Optional email for Giver follow-up (kept private from List Owner)
+  giver_message    String? // (For MySQL use: String? @db.Text)
+  giver_amount     Int?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Tracking
   is_purchased Boolean  @default(false)

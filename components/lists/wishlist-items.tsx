@@ -1,8 +1,9 @@
 import { auth } from "@/auth";
 import WishlistItemCard from "@/components/cards/wishlist-item";
 import prisma from "@/lib/prisma";
-import { WishlistItem } from "@prisma/client";
+import { User, WishlistItem } from "@prisma/client";
 import { Frown, Gift } from "lucide-react";
+import { cookies } from "next/headers";
 import Image from "next/image";
 
 type WishlistItemsProps = ({ shareId: string } | { wishlistId: string }) & {
@@ -20,6 +21,9 @@ export default async function WishlistItems(props: WishlistItemsProps) {
         orderBy: {
           createdAt: "desc",
         },
+        include: {
+          reservations: true,
+        },
       },
       user: {
         select: {
@@ -30,6 +34,10 @@ export default async function WishlistItems(props: WishlistItemsProps) {
       },
     },
   });
+
+  const cookieStore = await cookies();
+
+  const guestId = cookieStore.get("wishlist_guest_id")?.value;
 
   if (!wishlist) {
     return (
@@ -75,6 +83,14 @@ export default async function WishlistItems(props: WishlistItemsProps) {
             path="/wishlists/[id]"
             expanded={props.expanded}
             wishlistOwner={wishlist.user}
+            sessionUser={session?.user as User}
+            blockGift={
+              !!item.reservations.find(
+                (v) =>
+                  (v.userId && v.userId === session?.user?.id) ||
+                  (v.giver_session_id && v.giver_session_id == guestId)
+              )
+            }
           />
         ))}
         {wishlist.items.length === 0 && (

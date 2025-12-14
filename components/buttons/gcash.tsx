@@ -7,9 +7,10 @@ import { PaymentQRModal } from "@/components/modals/payment-qr-modal";
 
 interface GCashButtonProps {
   user: Partial<User>;
+  sessionUser?: User;
 }
 
-export default function GCashButton({ user }: GCashButtonProps) {
+export default function GCashButton({ user, sessionUser }: GCashButtonProps) {
   const modalRef = useRef<HTMLDialogElement>(null);
 
   return (
@@ -21,7 +22,7 @@ export default function GCashButton({ user }: GCashButtonProps) {
         <QrCode size={16} /> Give Cash via GCash QR
       </button>
 
-      <PaymentQRModal ref={modalRef} user={user} amount="Any Amount" />
+      <PaymentQRModal ref={modalRef} user={user} sessionUser={sessionUser} />
     </>
   );
 }
