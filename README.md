@@ -124,3 +124,8 @@ Here are some ways to learn more and expand upon this example:
 - [Discord](https://pris.ly/discord)
 - [Twitter](https://twitter.com/prisma)
 - [Bluesky](https://bsky.app/profile/prisma.dev)
+
+## Attributions
+
+Background for OG image
+<a href="https://www.freepik.com/free-vector/festive-christmas-greeting-brown-background_11563578.htm#fromView=search&page=2&position=4&uuid=d8d3a39a-666d-4740-8a29-d1bc882d72f7&query=Holiday+background">Image by rawpixel.com on Freepik</a>
