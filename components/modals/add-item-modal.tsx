@@ -20,27 +20,21 @@ export default function AddItemModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const [isShopee, setIsShopee] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm({
     defaultValues: {
       original_link: "",
     } as Partial<WishlistItem>,
     onSubmit: async ({ value }) => {
-      setIsSubmitting(true);
-      try {
-        const res = await upsertWishlistItemByShareId(shareId, value);
+      const res = await upsertWishlistItemByShareId(shareId, value);
 
-        if (!res.success) {
-          toast.error(res.reason);
-          return;
-        }
-
-        toast.success("Wishlist item added successfully");
-        handleSuccess();
-      } finally {
-        setIsSubmitting(false);
+      if (!res.success) {
+        toast.error(res.reason);
+        return;
       }
+
+      toast.success("Wishlist item added successfully");
+      handleSuccess();
     },
   });
 
@@ -89,7 +83,7 @@ export default function AddItemModal({
 
       form.reset(updated);
     },
-    [form]
+    [form],
   );
 
   useEffect(() => {
@@ -152,7 +146,7 @@ export default function AddItemModal({
               <input
                 type="url"
                 className="grow"
-                disabled={isSubmitting}
+                disabled={form.state.isSubmitting}
                 onChange={(e) => field.handleChange(e.target.value)}
                 value={field.state.value!}
                 placeholder="URL"
@@ -222,29 +216,34 @@ export default function AddItemModal({
                 item={values}
                 onUpdateItem={(item) => form.reset(item)}
                 expanded
-                disabled={isSubmitting}
+                disabled={form.state.isSubmitting}
               />
             </>
           )}
         </form.Subscribe>
         <div className="modal-action">
-          <button
-            className="btn btn-success"
-            onClick={form.handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating..." : "Create"}
-          </button>
-
-          <form method="dialog">
-            <button
-              className="btn"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Close
-            </button>
-          </form>
+          <form.Subscribe>
+            {({ isSubmitting }) => (
+              <>
+                <button
+                  className="btn btn-success"
+                  onClick={form.handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Creating..." : "Create"}
+                </button>
+                <form method="dialog">
+                  <button
+                    className="btn"
+                    onClick={handleClose}
+                    disabled={form.state.isSubmitting}
+                  >
+                    Close
+                  </button>
+                </form>
+              </>
+            )}
+          </form.Subscribe>
         </div>
       </div>
     </dialog>

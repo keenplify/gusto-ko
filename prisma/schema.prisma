@@ -14,17 +14,18 @@ datasource db {
 model User {
   // Use String for ID to match common UUID/CUID usage in modern applications,
   // especially if integrating external services like Supabase/Firebase Auth.
-  id            String        @id @default(cuid()) // Changed to String/cuid() for better compatibility
+  id            String    @id @default(cuid()) // Changed to String/cuid() for better compatibility
   name          String? // The name shown on the shared list (e.g., "Ate Sarah's")
-  email         String        @unique
+  email         String    @unique
   emailVerified DateTime?
   image         String?
   gcashQRUrl    String?
-  accounts      Account[]
-  sessions      Session[]
-  reservations  Reservation[]
+  birthdate     DateTime?
 
-  wishlists Wishlist[]
+  accounts     Account[]
+  sessions     Session[]
+  reservations Reservation[]
+  wishlists    Wishlist[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

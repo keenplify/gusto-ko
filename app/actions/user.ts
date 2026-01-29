@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
+import { User } from "@prisma/client";
 
 /**
  * Update the authenticated user's GCash QR URL
@@ -71,6 +72,38 @@ export async function removeUserGCashQRUrl() {
     return {
       success: false,
       reason: "Failed to remove GCash QR URL",
+    };
+  }
+}
+
+/**
+ * Update current user
+ */
+export async function updateUser(user: Partial<User>) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.email) {
+      return {
+        success: false,
+        reason: "User not authenticated",
+      };
+    }
+    const updatedUser = await prisma.user.update({
+      where: { email: session.user.email },
+      data: user,
+    });
+
+    revalidatePath("/");
+    return {
+      success: true,
+      data: updatedUser,
+    };
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return {
+      success: false,
+      reason: "Failed to update user",
     };
   }
 }

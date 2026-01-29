@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { ChevronRight, Gift } from "lucide-react";
 import { pluralize } from "@/lib/string";
 import Link from "next/link";
+import SetupBirthdateModal from "@/components/modals/setup-birthdate-modal";
 
 interface UserWishlistsProps {
   userId: string;
@@ -14,7 +15,7 @@ export default async function UserWishlists({ userId }: UserWishlistsProps) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true },
+    select: { name: true, birthdate: true },
   });
 
   const wishlists = userId
@@ -34,6 +35,8 @@ export default async function UserWishlists({ userId }: UserWishlistsProps) {
 
   return (
     <ul className="list bg-base-100 rounded-box shadow-md w-full">
+      {isSelf && !user?.birthdate && <SetupBirthdateModal />}
+
       <li className="p-4 pb-2 text-xs opacity-60 tracking-wide">
         {isSelf ? "Your Wishlists" : `${user?.name || "Their"} Wishlists`}
       </li>
