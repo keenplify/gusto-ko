@@ -18,7 +18,7 @@ export default function SetupBirthdateModal() {
 
   const form = useForm({
     defaultValues: {
-      birthdate: new Date(),
+      birthdate: null as Date | null,
     },
     onSubmit: async ({ value }) => {
       const res = await updateUser({
@@ -94,7 +94,7 @@ export default function SetupBirthdateModal() {
               <div className="flex justify-center min-h-[350px] react-day-picker bg-base-200 rounded-xl p-2">
                 <DayPicker
                   mode="single"
-                  selected={field.state.value}
+                  selected={field.state.value || undefined}
                   onSelect={(date) => (date ? field.handleChange(date) : null)}
                   required
                   captionLayout="dropdown"

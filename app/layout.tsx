@@ -55,7 +55,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="min-h-screen bg-linear-to-b from-base-300 to-base-100 text-base-content flex flex-col">
-          <main className="max-w-4xl w-full mx-auto grow flex flex-col h-full">
+          <main className="w-full mx-auto grow flex flex-col h-full items-center">
             <CropImageProvider>{children}</CropImageProvider>
           </main>
         </div>

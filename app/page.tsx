@@ -14,10 +14,11 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-24 pb-16">
+    <div className="w-full max-w-4xl flex flex-col gap-4 px-4 pt-24 pb-16">
       <div className="text-center mb-16">
         <h1 className="text-5xl font-bold mb-4 bg-clip-text flex gap-4 items-center justify-center text-primary">
-          <Gift size={64} /> <span>Gusto ko ng ...</span>
+          <Gift size={64} />
+          <span>Gusto ko ng ...</span>
         </h1>
         <p className="text-base-content/85 text-lg max-w-2xl mx-auto font-bold">
           The Pinoy Wishlist App ✨
